@@ -1,0 +1,12 @@
+{
+  "name": "velnor-house",
+  "version": "1.0.1",
+  "private": true,
+  "scripts": {
+    "dev": "concurrently -n backend,client,admin -c blue,green,magenta \"npm run dev --prefix apps/backend\" \"npm run dev --prefix apps/client\" \"npm run dev --prefix apps/admin\"",
+    "install:all": "npm install --prefix apps/backend && npm install --prefix apps/client && npm install --prefix apps/admin"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.2"
+  }
+}
