@@ -304,12 +304,21 @@ export function CheckoutPage() {
                     {t('checkout.phoneNumber')}
                   </Label>
                   <Input
-                    className="h-11 rounded-xl border-zinc-100 bg-zinc-50 sm:h-12 sm:rounded-2xl"
-                    value={formData.phone}
-                    onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                    placeholder="01xxxxxxxxx"
-                    required
-                  />
+                 type="tel"
+                  inputMode="numeric"
+                     pattern="[0-9]*"
+                       maxLength={11}
+                           className="h-11 sm:h-12 rounded-xl sm:rounded-2xl border-zinc-100 bg-zinc-50"
+                       value={formData.phone}
+                     onChange={(e) =>
+                            setFormData({
+                      ...formData,
+                        phone: e.target.value.replace(/\D/g, '').slice(0, 11),
+                     })
+                 }
+                          placeholder="01xxxxxxxxx"
+                      required
+            />
                 </div>
               </div>
             </div>
