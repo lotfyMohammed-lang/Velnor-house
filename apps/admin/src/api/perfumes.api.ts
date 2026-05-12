@@ -44,6 +44,7 @@ export type UpdatePerfumePayload = Partial<CreatePerfumePayload>;
 
 export async function getPerfumes(): Promise<Perfume[]> {
   const response = await fetch(`${API_BASE_URL}/admin/perfumes`, {
+    method: 'GET',
     headers: getAdminHeaders(),
   });
 
@@ -102,8 +103,7 @@ export async function uploadImage(file: File): Promise<{ imageUrl: string }> {
   formData.append('image', file);
 
   const headers = getAdminHeaders();
-  // Remove Content-Type so the browser sets it with the boundary
-  const { 'Content-Type': _, ...uploadHeaders } = headers as any;
+  const { 'Content-Type': _ignored, ...uploadHeaders } = headers as Record<string, string>;
 
   const response = await fetch(`${API_BASE_URL}/admin/perfumes/upload`, {
     method: 'POST',

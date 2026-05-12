@@ -4,10 +4,11 @@ import { authMiddleware } from '../../middleware/auth.middleware';
 
 const router = Router();
 
+// Public routes
 router.get('/', PerfumesController.getAll);
 router.get('/:id', PerfumesController.getById);
 
-// Admin only routes (protected by authMiddleware for now)
+// Protected routes
 router.post('/', authMiddleware, PerfumesController.create);
 router.put('/:id', authMiddleware, PerfumesController.update);
 router.delete('/:id', authMiddleware, PerfumesController.delete);

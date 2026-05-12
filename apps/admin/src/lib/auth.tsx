@@ -36,7 +36,9 @@ type AuthContextValue = {
 
 const AuthContext = createContext<AuthContextValue | null>(null);
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api';
+const API_BASE_URL =
+  import.meta.env.VITE_API_BASE_URL || 'https://velnor-house-production.up.railway.app/api';
+
 const TOKEN_KEY = 'admin_access_token';
 const ADMIN_KEY = 'todolo_admin_user';
 
@@ -79,51 +81,58 @@ export function AdminAuthProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
-  const login = useCallback(async (email: string, password: string): Promise<AuthResult> => {
-    try {
-      const response = await fetch(`${API_BASE_URL}/admin/auth/login`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password }),
-      });
+  const login = useCallback(
+    async (email: string, password: string): Promise<AuthResult> => {
+      try {
+        const response = await fetch(`${API_BASE_URL}/admin/auth/login`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, password }),
+        });
 
-      const data = await response.json();
+        const data = await response.json();
 
-      if (!response.ok) {
-        return { success: false, error: data?.message || 'Login failed' };
+        if (!response.ok) {
+          return { success: false, error: data?.message || 'Login failed' };
+        }
+
+        const result = data as AuthResponse;
+        setAdmin(result.admin);
+        setToken(result.token);
+
+        return { success: true };
+      } catch {
+        return { success: false, error: 'Network error. Please try again.' };
       }
+    },
+    [setAdmin, setToken]
+  );
 
-      const result = data as AuthResponse;
-      setAdmin(result.admin);
-      setToken(result.token);
-      return { success: true };
-    } catch {
-      return { success: false, error: 'Network error. Please try again.' };
-    }
-  }, [setAdmin, setToken]);
+  const register = useCallback(
+    async (name: string, email: string, password: string): Promise<AuthResult> => {
+      try {
+        const response = await fetch(`${API_BASE_URL}/admin/auth/register`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${localStorage.getItem(TOKEN_KEY)}`,
+          },
+          body: JSON.stringify({ name, email, password }),
+        });
 
-  const register = useCallback(async (name: string, email: string, password: string): Promise<AuthResult> => {
-    try {
-      const response = await fetch(`${API_BASE_URL}/admin/auth/register`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${localStorage.getItem(TOKEN_KEY)}`,
-        },
-        body: JSON.stringify({ name, email, password }),
-      });
+        const data = await response.json();
 
-      const data = await response.json();
+        if (!response.ok) {
+          return { success: false, error: data?.message || 'Registration failed' };
+        }
 
-      if (!response.ok) {
-        return { success: false, error: data?.message || 'Registration failed' };
+        return { success: true };
+      } catch {
+        return { success: false, error: 'Network error. Please try again.' };
       }
-
-      return { success: true };
-    } catch {
-      return { success: false, error: 'Network error. Please try again.' };
-    }
-  }, []);
+    },
+    []
+  );
 
   const logout = useCallback(() => {
     setAdmin(null);
@@ -131,7 +140,14 @@ export function AdminAuthProvider({ children }: { children: ReactNode }) {
   }, [setAdmin, setToken]);
 
   const value = useMemo<AuthContextValue>(
-    () => ({ admin, token, isAuthenticated: !!token, login, register, logout }),
+    () => ({
+      admin,
+      token,
+      isAuthenticated: !!token,
+      login,
+      register,
+      logout,
+    }),
     [admin, token, login, register, logout]
   );
 

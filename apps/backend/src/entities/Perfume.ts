@@ -45,7 +45,7 @@ export class Perfume {
   @Column({ type: 'varchar', length: 500 })
   imageUrl!: string;
 
-  @Column({ type: 'simple-array', nullable: true })
+  @Column({ type: 'simple-array', nullable: true, default: '' })
   tags!: string[];
 
   @Column({ type: 'boolean', default: false })
