@@ -16,7 +16,9 @@ export function ForgotPasswordPage() {
     e.preventDefault();
     setError('');
 
-    if (!identifier.trim()) {
+    const trimmedIdentifier = identifier.trim();
+
+    if (!trimmedIdentifier) {
       setError('Username or email is required');
       return;
     }
@@ -27,7 +29,7 @@ export function ForgotPasswordPage() {
       const res = await fetch(`${API_BASE_URL}/auth/forgot-password`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username: identifier }),
+        body: JSON.stringify({ identifier: trimmedIdentifier }),
       });
 
       const data = await res.json().catch(() => null);
@@ -46,9 +48,9 @@ export function ForgotPasswordPage() {
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-zinc-50 px-4 py-12 dark:bg-zinc-950">
-      <Link 
-        to="/login" 
-        className="fixed top-8 left-8 z-50 flex items-center gap-2 text-sm font-semibold text-zinc-500 transition-colors hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100"
+      <Link
+        to="/login"
+        className="fixed left-4 top-4 z-50 flex items-center gap-2 text-sm font-semibold text-zinc-500 transition-colors hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100 sm:left-8 sm:top-8"
       >
         <ArrowLeft className="h-4 w-4" />
         Back to Sign In
@@ -62,7 +64,7 @@ export function ForgotPasswordPage() {
           <p className="text-sm text-zinc-500 dark:text-zinc-400">
             {isSubmitted
               ? 'Check your inbox for a secure recovery link.'
-              : 'Enter your email to receive a secure access link.'}
+              : 'Enter your email or username to receive a secure recovery link.'}
           </p>
         </div>
 
@@ -78,21 +80,32 @@ export function ForgotPasswordPage() {
             <div className="flex h-20 w-20 items-center justify-center rounded-full bg-emerald-100 text-emerald-600 dark:bg-emerald-500/20 dark:text-emerald-400">
               <CheckCircle2 className="h-10 w-10" />
             </div>
+
             <p className="text-sm font-medium text-zinc-600 dark:text-zinc-300">
-              If an account exists for <span className="font-bold text-zinc-900 dark:text-white">{identifier}</span>, instructions are on the way.
+              If an account exists for{' '}
+              <span className="font-bold text-zinc-900 dark:text-white">{identifier}</span>,
+              instructions are on the way.
             </p>
-            <Button asChild className="h-12 w-full rounded-full bg-zinc-900 font-bold text-white hover:bg-zinc-800 dark:bg-white dark:text-zinc-900 dark:hover:bg-zinc-200">
+
+            <Button
+              asChild
+              className="h-12 w-full rounded-full bg-zinc-900 font-bold text-white hover:bg-zinc-800 dark:bg-white dark:text-zinc-900 dark:hover:bg-zinc-200"
+            >
               <Link to="/login">Return to Sign In</Link>
             </Button>
           </div>
         ) : (
           <form onSubmit={handleSubmit} className="space-y-6">
             <div className="space-y-2">
-              <Label htmlFor="identifier" className="text-xs font-bold uppercase tracking-wider text-zinc-400">
-                Email Address
+              <Label
+                htmlFor="identifier"
+                className="text-xs font-bold uppercase tracking-wider text-zinc-400"
+              >
+                Email Address or Username
               </Label>
+
               <div className="relative">
-                <Mail className="absolute top-1/2 left-4 h-5 w-5 -translate-y-1/2 text-zinc-400" />
+                <Mail className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-zinc-400" />
                 <Input
                   id="identifier"
                   className="h-12 border-none bg-zinc-100 pl-12 dark:bg-zinc-800"
@@ -100,20 +113,17 @@ export function ForgotPasswordPage() {
                   value={identifier}
                   onChange={(e) => setIdentifier(e.target.value)}
                   disabled={isLoading}
+                  autoComplete="email"
                 />
               </div>
             </div>
 
-            <Button 
-              type="submit" 
-              className="h-12 w-full rounded-full bg-[#ff416c] font-bold text-white shadow-lg transition-transform hover:scale-105 active:scale-95" 
+            <Button
+              type="submit"
+              className="h-12 w-full rounded-full bg-[#ff416c] font-bold text-white shadow-lg transition-transform hover:scale-105 active:scale-95"
               disabled={isLoading}
             >
-              {isLoading ? (
-                <Loader2 className="h-5 w-5 animate-spin" />
-              ) : (
-                'SEND RESET LINK'
-              )}
+              {isLoading ? <Loader2 className="h-5 w-5 animate-spin" /> : 'SEND RESET LINK'}
             </Button>
           </form>
         )}

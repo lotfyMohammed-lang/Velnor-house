@@ -27,6 +27,17 @@ function getGoogleClientId(): string {
   return clientId;
 }
 
+function getClientBaseUrl(): string {
+  const rawValue =
+    process.env.CLIENT_URL ||
+    process.env.CORS_ORIGIN ||
+    'http://localhost:5180';
+
+  const firstValue = rawValue.split(',')[0].trim();
+
+  return firstValue.endsWith('/') ? firstValue.slice(0, -1) : firstValue;
+}
+
 const googleClient = new OAuth2Client(getGoogleClientId());
 
 export class AuthService {
@@ -85,8 +96,9 @@ export class AuthService {
   }
 
   static async facebookLogin(accessToken: string) {
-    // Verify Facebook token
-    const fbRes = await fetch(`https://graph.facebook.com/me?fields=id,name,email&access_token=${accessToken}`);
+    const fbRes = await fetch(
+      `https://graph.facebook.com/me?fields=id,name,email&access_token=${accessToken}`
+    );
     const fbData = (await fbRes.json()) as FacebookResponse;
 
     if (!fbData || fbData.error || !fbData.id) {
@@ -96,9 +108,7 @@ export class AuthService {
     const facebookId = fbData.id;
     const email = fbData.email;
     const name = fbData.name;
-    
-    // Facebook might not always provide an email if the user didn't grant permission
-    // But for our app, we likely need it.
+
     if (!email) {
       throw new Error('Facebook account must have an email associated');
     }
@@ -121,6 +131,7 @@ export class AuthService {
         resetPasswordTokenHash: null,
         resetPasswordExpiresAt: null,
       });
+
       await userRepository.save(user);
     } else if (!user.facebookId) {
       user.facebookId = facebookId;
@@ -141,10 +152,6 @@ export class AuthService {
   }
 
   static async twitterLogin(twitterId: string, username: string, email?: string) {
-    // Note: Twitter OAuth 2.0 flow is usually handled on the client or via a multi-step process.
-    // Assuming the client has successfully authenticated and provides a verified twitterId and username/email.
-    // In a real-world scenario, you should verify the Twitter token/session on the backend.
-    
     if (!twitterId) throw new Error('Twitter ID is required');
 
     let user = await userRepository.findOne({
@@ -155,6 +162,7 @@ export class AuthService {
       if (!email) {
         throw new Error('Email is required for new Twitter users');
       }
+
       user = userRepository.create({
         email,
         twitterId,
@@ -168,6 +176,7 @@ export class AuthService {
         resetPasswordTokenHash: null,
         resetPasswordExpiresAt: null,
       });
+
       await userRepository.save(user);
     } else if (!user.twitterId) {
       user.twitterId = twitterId;
@@ -264,30 +273,26 @@ export class AuthService {
   }
 
   static async forgotPassword(identifier: string) {
-    console.log('🔥 FORGOT PASSWORD SERVICE HIT:', identifier);
-
     const normalizedIdentifier = identifier.trim();
 
     if (!normalizedIdentifier) {
       throw new Error('Username or email is required');
     }
 
+    const loweredIdentifier = normalizedIdentifier.toLowerCase();
+
     const user = await userRepository.findOne({
       where: [
         { username: normalizedIdentifier },
-        { email: normalizedIdentifier.toLowerCase() },
+        { email: loweredIdentifier },
       ],
     });
 
     if (!user) {
-      console.log('❌ No user found for identifier:', normalizedIdentifier);
       return {
         message: 'If that account exists, a reset link has been sent to the registered email.',
       };
     }
-
-    console.log('👤 User found:', user.username);
-    console.log('📧 Sending email to:', user.email);
 
     const rawToken = crypto.randomBytes(32).toString('hex');
     const hashedToken = crypto.createHash('sha256').update(rawToken).digest('hex');
@@ -298,14 +303,12 @@ export class AuthService {
 
     await userRepository.save(user);
 
-    const clientBaseUrl = process.env.CLIENT_URL || process.env.CORS_ORIGIN || 'http://localhost:5180';
-    // If CORS_ORIGIN is a comma separated list, take the first one
-    const firstBaseUrl = clientBaseUrl.split(',')[0];
-    const resetUrl = `${firstBaseUrl}/reset-password?token=${rawToken}`;
+    const clientBaseUrl = getClientBaseUrl();
+    const resetUrl = `${clientBaseUrl}/reset-password?token=${rawToken}`;
 
     await sendMail(
       user.email,
-      `Velnor House Password Reset ${Date.now()}`,
+      'Velnor House Password Reset',
       `You requested a password reset.
 
 Click the link below to reset your password:
@@ -315,8 +318,6 @@ This link will expire in 30 minutes.
 
 If you did not request this, you can safely ignore this email.`
     );
-
-    console.log('✅ Email function called successfully');
 
     return {
       message: 'If that account exists, a reset link has been sent to the registered email.',
